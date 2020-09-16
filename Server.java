@@ -1,53 +1,40 @@
-import java.io.BufferedReader;
+
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+
 import java.net.ServerSocket;
 import java.net.Socket;
-
-
+import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
 
     private static final int PORT = 9090;
 
-    private static String[] fruits = {"kiwi", "apple", "strawberry", "lemon", "grape"};
-    private static String[] colors = {"green", "pink", "red", "white", "yellow"};
-    
+    private static String[] fruits = { "kiwi", "apple", "strawberry", "lemon", "grape" };
+    private static String[] colors = { "green", "pink", "red", "white", "yellow" };
+
+    private static ArrayList<ClientHandler> clientList = new ArrayList<>();
+    private static ExecutorService pool = Executors.newFixedThreadPool(3);
+
     public static void main(String[] args) throws IOException {
 
         ServerSocket listener = new ServerSocket(PORT);
         
-        System.out.println("[Server] Waiting for client connection...");
-        Socket connToClient = listener.accept();       
-        System.out.println("[Server] Connected to client.");
-
-        // autoflush : set true to send messages as soon as the print line statement is run, 
-        // and don't need to wait to send messages until the buffer is full
-        PrintWriter outputFromServer = new PrintWriter(connToClient.getOutputStream(), true);
-        System.out.println("[Server] Ready to send to client.");
-
-        BufferedReader inputFromClient = new BufferedReader(
-                                new InputStreamReader(connToClient.getInputStream()));
-        System.out.println("[Server] Ready to receive from client.");                    
-        
         try {
             while(true) {
-                String clientRequest = inputFromClient.readLine();
-                if(clientRequest.contains("fruit")) {
-                    outputFromServer.println(GetRandomPairs());
-                } else {
-                    outputFromServer.println("Type 'fruit' to get a random fruit.");
-                }            
-            } 
+                System.out.println("[Server] Waiting for client connection...");
+                Socket connToClient = listener.accept();       
+                System.out.println("[Server] Connected to client."); 
+                
+                ClientHandler clientThead = new ClientHandler(connToClient, clientList);
+                clientList.add(clientThead);
 
+                pool.execute(clientThead);
+            }            
         } finally {
-            System.out.println("[Server] Closing.");
-            
-            connToClient.close();
-            listener.close();            
+            listener.close();
         }
-
 
 
     }
