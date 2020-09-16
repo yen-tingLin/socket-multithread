@@ -14,17 +14,16 @@ public class Client {
 
         Socket connToServer = new Socket(SERVER_IP, SERVER_PORT);
               
-        BufferedReader inputFromServer = new BufferedReader( 
-                        new InputStreamReader(connToServer.getInputStream()));                        
+        ServerConnection serverConnection = new ServerConnection(connToServer);                     
         System.out.println("[Client] Ready to receive from server.");                    
               
         
         BufferedReader keyboard = new BufferedReader(new InputStreamReader(System.in));
         // autoflush : true
-        PrintWriter outputFromClient = new PrintWriter(connToServer.getOutputStream(), true);
-                            
-                            
+        PrintWriter outputFromClient = new PrintWriter(connToServer.getOutputStream(), true);   
         System.out.println("[Client] Ready to send to server.");
+
+        new Thread(serverConnection).start();
 
         while(true) {
             System.out.println("> ");
@@ -34,10 +33,6 @@ public class Client {
             // stop the communication
             if(inputFromKeyboard.equals("q")) break; 
             outputFromClient.println(inputFromKeyboard);
-
-            // this is blocking code, wait until receive response from server
-            String responseFromServer = inputFromServer.readLine();
-            System.out.println("[Client] Received from server : " + responseFromServer);
         }
 
         connToServer.close();
